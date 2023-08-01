@@ -1,6 +1,6 @@
 - Feature Name: Content Steering
 - Start Date: 2023-07-31
-- PR: (leave this empty)
+- PR: https://github.com/videojs/rfcs/pull/1
 
 # Summary
 [summary]: #summary
