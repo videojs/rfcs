@@ -39,7 +39,7 @@ An example of how a typical interaction with the player, steering server and mul
 
 ![Example DASH Content Steering Flow Diagram](./ContentSteering/DASH-Content-Steering-Flow.png)
 
-For more details on how this accomplished for each format, see the appropriate specification:
+For more details on how this is accomplished for each format, see the appropriate specification:
 * [HLS Content Steering Specifiation](https://developer.apple.com/streaming/HLSContentSteeringSpecification.pdf)
 * [DASH Content Steering Specification](https://dashif.org/docs/DASH-IF-CTS-00XX-Content-Steering-Community-Review.pdf)
 
@@ -59,22 +59,22 @@ Both specifications (linked above) enumerate detailed steps on the required logi
 # Drawbacks
 [drawbacks]: #drawbacks
 
-* This may not be a useful feature for *all* users of video.js.
+* This may not be a useful or noticeable feature for *all* users of video.js.
 * The work required is substantial.
-* Could potentially cause regressions in core libraries such as the parsers or VHS. 
+* This could potentially cause regressions in core libraries such as the parsers or VHS. 
 
 # Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
 
-* This design is the most applicable to our current architecture, the details about which specific class to implement the may change as development progresses, but the main components will remain the same.
+* This design is the most applicable to our current architecture. The details of implementation may change as development progresses, but the main components will remain the same.
 * A separate content steering parser is an alternative that could keep some of the logic out of VHS for more clarity, but may not be necessary due to the small amount of parsing required.
-* Not developing this feature could put is behind some of the other open source players available.
+* Not developing this feature could put video.js behind some of the other open source players available.
 
 # Prior art
 [prior-art]: #prior-art
 
 * This feature is already implemented in DASH.js and hls.js, both can be a useful reference.
-* This feature is currently being discussed with the research team at Brightcove and has been the subject of papers being presented at video industry conferences such as IBC and demuxed.
+* This feature is currently being discussed with the research team at Brightcove and has been the subject of papers submitted to video industry conferences such as IBC and demuxed.
 
 # Unresolved questions
 [unresolved-questions]: #unresolved-questions
