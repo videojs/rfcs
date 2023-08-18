@@ -14,7 +14,7 @@ Content steering describes a deterministic capability for a content distributor 
 # Motivation
 [motivation]: #motivation
 
-Content steering is a relatively new mechanism to allow content distributors greater control over where a player or end-user accesses their HLS or DASH media from, which can be leveraged to provide a better quality of experience. This feature has been implemented by other leading players in the industry and should also be adapted for video.js.
+Content steering is a relatively new mechanism to allow content distributors greater control over where a player or end-user accesses their HLS or DASH media from, which can be leveraged to provide a better quality of experience. This feature has been implemented by other leading players in the industry and should also be adopted by video.js.
 
 # Guide-level Explanation
 [guide-level-explanation]: #guide-level-explanation
