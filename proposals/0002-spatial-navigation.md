@@ -1,6 +1,6 @@
 - Feature Name: Spatial Navigation
 - Start Date: 2023-09-12
-- PR:
+- PR: https://github.com/videojs/rfcs/pull/2
 
 # Summary
 [summary]: #summary
