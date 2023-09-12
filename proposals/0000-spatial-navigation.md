@@ -12,13 +12,13 @@ This feature aims to improve user experience and accessibility on smartTV device
 
 Smart TV devices commonly use directional input, such as arrow keys on a remote control. By implementing spatial navigation using the spatial navigation polyfill, we aim to ensure that users can intuitively navigate through player controls and elements on smartTV devices.
 
-###Goals
+### Goals
 - Enable seamless and intuitive navigation within the Video.js player on smart TV platforms.
 - Create a new SpatialNavigation component.
 - Implement the spatial navigation polyfill.
 - Redesign the Video.js user interface to suit smart TV platforms and facilitate spatial navigation.
 
-###Non-Goals
+### Non-Goals
 - Keycode mapping for smartTV devices that use non-standardized keycodes. The spatial navigation polyfill uses 37: 'left', 38: 'up', 39: 'right', and 40: 'down'.
 
 # Guide-level Explanation
@@ -31,15 +31,15 @@ In order to allow the user to navigate out of the progress bar (Slider), the UP 
 # Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
 
-##Dependency Management and Configuration Options
+## Dependency Management and Configuration Options
 For this feature, additional dependencies will be added: spatial-navigation-polyfill and flat-polyfill. Flat-polyfill is needed to accommodate devices lacking support for Array.prototype.flat.
 
 To introduce configurational flexibility, a new configuration option `enableRCUNavigation` will be introduced. This option will enable or disable the spatial navigation feature.
 
-##Bundle Size Considerations
+## Bundle Size Considerations
 At this stage, we haven't precisely determined the impact of the spatial navigation feature on the bundle size. If the integration of spatial navigation results in a significant growth in the bundle size, we‘ll introduce an alternative Video.js bundle with a spatial navigation feature included.
 
-##Code and UI changes
+## Code and UI changes
 
 This new feature will follow these steps:
 - Introduce a public option named `enableRCUNavigation`.
@@ -51,12 +51,12 @@ This new feature will follow these steps:
   - Select the best candidate
   - Focus the best candidate
 
-###In terms of changes to the code:
+### In terms of changes to the code:
 
 We need to make sure that events can still move upwards when spatial navigation is turned on (`enableRCUNavigation` is set to true). Currently, it’s blocking all keydown events with `event.stopPropagation()`, except for TAB key.
 Block the UP and DOWN keys to execute `stepForward()` and `stepBack()` functions, as these keys will be needed for navigation from and to the progress bar (Slider).
 
-###In terms of adding the code
+### In terms of adding the code
 
 Spatial-navigation interface and Component class extension
 
@@ -112,7 +112,7 @@ move(direction: SpatialNavigationDirection): void;
 }
 ```
 
-###In terms of changes the UI
+### In terms of changes the UI
 - Since LEFT and RIGHT keys are reserved for video seeking, we’ll have to change the UI and move the progress bar on top of the buttons in order to allow the users to use those keys to navigate between elements when buttons are focused and seek the video when the progress bar is focused
 - Current player controls are too small for big screens, so we’re aiming to make those bigger
 - Vjs-control-bar is using “display: flex;”, in order to make spatial-navigation-polyfill work properly we have to add a “gap: 1px;”
