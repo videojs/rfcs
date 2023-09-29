@@ -24,11 +24,11 @@ Smart TV devices commonly use directional input, such as arrow keys on a remote 
 
 Smart TV users will be able to navigate through Video.js player controls using arrow keys on their remote controls. The player will have an initial focus; when a user presses, for example, the "right" arrow key, the focus will shift to the next interactive control, allowing them to easily navigate through player UI elements. Focused UI elements will be selectable using the ENTER/OK button on the RCU.
 
-Currently, when the Slider is focused, all four directional arrow keys are mapped to the seek functions. To offer more granular control and enhance navigation, a new configuration option named `seek` will be introduced. This option will accept two potential values: `horizontal` or `vertical`.
+Currently, when the Slider is focused, all four directional arrow keys are mapped to the seek functions. To offer more granular control and enhance navigation, a new configuration option named `horizontalSeek` will be introduced. The `horizontalSeek` property will determine the behavior of the arrow keys in relation to the seek function.
 
-- When `seek` is set to `horizontal`, only the LEFT and RIGHT arrow keys will invoke the stepForward and stepBack functions, permitting users to progress or regress the playback timeline. On the other hand, the UP and DOWN arrow keys will facilitate navigation out of the Slider, transitioning focus to other UI elements.
+- When `horizontalSeek` is set to `true`, only the LEFT and RIGHT arrow keys will invoke the stepForward and stepBack functions, permitting users to progress or regress the playback timeline. Meanwhile, the UP and DOWN arrow keys will facilitate navigation out of the Slider, transitioning focus to other UI elements.
 
-- If `seek` is defined as `vertical`, the roles of the arrow keys will be inverted. The UP and DOWN arrow keys will invoke the stepForward and stepBack functions, while the LEFT and RIGHT keys will be reserved for spatial navigation.
+- If `horizontalSeek` is defined as `false`, the roles of the arrow keys will be inverted. The UP and DOWN arrow keys will invoke the stepForward and stepBack functions, while the LEFT and RIGHT keys will be reserved for spatial navigation.
 
 This enhancement ensures users not only have precise control over playback but also a seamless navigation experience within the Video.js player interface, allowing users to have different player UI.
 
@@ -39,13 +39,13 @@ This enhancement ensures users not only have precise control over playback but a
 For this feature, additional dependencies will be needed but won't be included by default: spatial-navigation-polyfill and flat-polyfill. Flat-polyfill is needed to accommodate devices lacking support for Array.prototype.flat.
 
 To introduce configurational flexibility, a new configuration option named `spatialNavigation` will be introduced. This option will be an object containing two properties: 
-- `enabled`, which can be set to `true` or `false` to enable or disable the spatial navigation feature, 
-- `seek`, which can be set to either `horizontal` or `vertical`.
+- `enabled`, Set it to `true` to activate or `false` to deactivate the spatial navigation feature,
+- `horizontalSeek`, define as `true` to allow horizontal seek operations and `false` for vertical seeks.
 
 ```
 spatialNavigation: {
-    enabled: true/false,
-    seek: 'horizontal'/'vertical'
+    enabled: [true|false],
+    horizontalSeek: [true|false]
 }
 ```
 
@@ -56,7 +56,8 @@ At this stage, we haven't precisely determined the impact of the spatial navigat
 
 This new feature will follow these steps:
 - Introduce a public option named `spatialNavigation`.
-  - This option will be an object containing two properties `enabled`, which can be set to `true` or `false`, and `seek`, which can be set to either `horizontal` or `vertical`.
+  - This option will be an object containing two properties `enabled`, which can be set to `true` or `false`, and `horizontalSeek`, which can be set to either `true` or `false`.
+- By default, this spatial navigation feature will be disabled. This ensures that current Video.js users won't experience any changes or disruptions in their regular use.
 - When a player is set up with the rcu navigation feature active, initiate the SpatialNavigation instance.
 - Collect every focusable component and incorporate them into the SpatialNavigation instance.
 - Focus first available navigable candidate.
@@ -68,7 +69,7 @@ This new feature will follow these steps:
 ### In terms of changes to the code:
 
 We need to make sure that events can still move upwards when spatial navigation is turned on (`spatialNavigation.enabled` is set to true). Currently, it’s blocking all keydown events with `event.stopPropagation()`, except for TAB key.
-Block the UP and DOWN keys to execute `stepForward()` and `stepBack()` functions, when `spatialNavigation.seek` is set to `horizontal` as these keys will be needed for navigation from and to the progress bar (Slider) and vice versa.
+Restrict the UP and DOWN keys to execute `stepForward()` and `stepBack()` functions, when `spatialNavigation.horizontalSeek` is set to `true` as these keys will be needed for navigation from and to the progress bar (Slider) and vice versa.
 
 ### In terms of adding the code
 
