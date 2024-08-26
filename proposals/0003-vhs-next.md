@@ -7,47 +7,47 @@
 * [Summary](#summary)
 * [Motivation](#motivation)
     * [Maintenance Complexity](#maintenance-complexity)
-    * [Troubleshooting Complexity](#troubleshooting-complexity-)
+    * [Troubleshooting Complexity](#troubleshooting-complexity)
     * [API limitations](#api-limitations)
 * [Monorepo Structure](#monorepo-structure)
 * [Functional Requirements](#functional-requirements)
 * [Non-Functional Requirements and DX](#non-functional-requirements-and-dx)
-    * [Browsers Matrix Support](#browsers-matrix-support)
+  * [Browsers Matrix Support](#browsers-matrix-support)
 * [Entities](#entities)
-    * [Entities and their boundaries (high-level diagram)](#entities-and-their-boundaries-high-level-diagram)
-    * [Player (Facade)](#player-facade)
-    * [ServiceLocator](#servicelocator)
-        * [Usage Example 1 (Access Service and use it)](#usage-example-1-access-service-and-use-it)
-        * [Usage Example 2 (Build your own player)](#usage-example-2-build-your-own-player)
-        * [Usage Example 3 (Use your own services, customizations)](#usage-example-3-use-your-own-services-customizations)
-        * [Usage Example 4 (Transfer State)](#usage-example-4-transfer-state)
-    * [PipelineProvider](#pipelineprovider)
-    * [AbrManager](#abrmanager)
-    * [NetworkingManager](#networkingmanager)
-    * [Events API](#events-api)
-    * [Errors API](#errors-api)
+  * [Entities and their boundaries (high-level diagram)](#entities-and-their-boundaries-high-level-diagram)
+  * [Player (Facade)](#player-facade)
+  * [ServiceLocator](#servicelocator)
+    * [Usage Example 1 (Access Service and use it)](#usage-example-1-access-service-and-use-it)
+    * [Usage Example 2 (Build "your own player")](#usage-example-2-build-your-own-player)
+    * [Usage Example 3 (Use your own services, customizations)](#usage-example-3-use-your-own-services-customizations)
+    * [Usage Example 4 (Transfer State)](#usage-example-4-transfer-state)
+  * [PipelineProvider](#pipelineprovider)
+  * [AbrManager](#abrmanager)
+  * [NetworkingManager](#networkingmanager)
+  * [Events API](#events-api)
+  * [Errors API](#errors-api)
 * [Scenarios](#scenarios)
-    * [Applicable for each scenario](#applicable-for-each-scenario)
-    * [HLS VOD (load)](#hls-vod-load)
-    * [HLS VOD (Continuous loading within one rendition group)](#hls-vod-continuous-loading-within-one-rendition-group)
-    * [HLS VOD (Manual Quality Switching)](#hls-vod-manual-quality-switching)
-    * [HLS VOD (ABR Quality Switching)](#hls-vod-abr-quality-switching)
-    * [HLS VOD (Seek out of buffer)](#hls-vod-seek-out-of-buffer)
-    * [HLS Live (load)](#hls-live-load)
-    * [HLS Live (Continuous loading within one rendition group)](#hls-live-continuous-loading-within-one-rendition-group)
-    * [HLS Live (Manual Quality Switching)](#hls-live-manual-quality-switching)
-    * [HLS Live (ABR Quality Switching)](#hls-live-abr-quality-switching)
-    * [HLS Live (Seek out of buffer)](#hls-live-seek-out-of-buffer)
-    * [DASH VOD (load)](#dash-vod-load)
-    * [DASH VOD (Continuous loading within one rendition group)](#dash-vod-continuous-loading-within-one-rendition-group)
-    * [DASH VOD (Manual Quality Switching)](#dash-vod-manual-quality-switching)
-    * [DASH VOD (ABR Quality Switching)](#dash-vod-abr-quality-switching)
-    * [DASH VOD (Seek out of buffer)](#dash-vod-seek-out-of-buffer)
-    * [DASH Live (load)](#dash-live-load)
-    * [DASH Live (Continuous loading within one rendition group)](#dash-live-continuous-loading-within-one-rendition-group)
-    * [DASH Live (Manual Quality Switching)](#dash-live-manual-quality-switching)
-    * [DASH Live (ABR Quality Switching)](#dash-live-abr-quality-switching)
-    * [DASH Live (Seek out of buffer)](#dash-live-seek-out-of-buffer)
+  * [Applicable for each scenario](#applicable-for-each-scenario)
+  * [HLS VOD (load)](#hls-vod-load)
+  * [HLS VOD (Continuous loading within one rendition group)](#hls-vod-continuous-loading-within-one-rendition-group)
+  * [HLS VOD (Manual Quality Switching)](#hls-vod-manual-quality-switching)
+  * [HLS VOD (ABR Quality Switching)](#hls-vod-abr-quality-switching)
+  * [HLS VOD (Seek out of buffer)](#hls-vod-seek-out-of-buffer)
+  * [HLS Live (load)](#hls-live-load)
+  * [HLS Live (Continuous loading within one rendition group)](#hls-live-continuous-loading-within-one-rendition-group)
+  * [HLS Live (Manual Quality Switching)](#hls-live-manual-quality-switching)
+  * [HLS Live (ABR Quality Switching)](#hls-live-abr-quality-switching)
+  * [HLS Live (Seek out of buffer)](#hls-live-seek-out-of-buffer)
+  * [DASH VOD (load)](#dash-vod-load)
+  * [DASH VOD (Continuous loading within one rendition group)](#dash-vod-continuous-loading-within-one-rendition-group)
+  * [DASH VOD (Manual Quality Switching)](#dash-vod-manual-quality-switching)
+  * [DASH VOD (ABR Quality Switching)](#dash-vod-abr-quality-switching)
+  * [DASH VOD (Seek out of buffer)](#dash-vod-seek-out-of-buffer)
+  * [DASH Live (load)](#dash-live-load)
+  * [DASH Live (Continuous loading within one rendition group)](#dash-live-continuous-loading-within-one-rendition-group)
+  * [DASH Live (Manual Quality Switching)](#dash-live-manual-quality-switching)
+  * [DASH Live (ABR Quality Switching)](#dash-live-abr-quality-switching)
+  * [DASH Live (Seek out of buffer)](#dash-live-seek-out-of-buffer)
 * [References](#references)
     * [HLS Key Rotation](#hls-key-rotation)
     * [HLS Server Control](#hls-server-control)
@@ -102,7 +102,7 @@
 
 This document describes high-level requirements, API, and scenario examples for the VHS-Next (videojs playback engine) project.
 
-This project is a pre-requisite for a massive videojs `9` update.
+This project is a pre-requisite for a massive `videojs-9` update.
 
 # Motivation
 
@@ -125,7 +125,7 @@ Unpredictable data flow made it increasingly difficult to troubleshoot the playb
 ### API limitations
 
 - The current playback engine is highly coupled with videojs and can't be used as a standalone player. There are many use cases where users want to build their own UI on top of the playback engine.
-- The current playback engine does not provide a robust events API for monitoring and obtaining a clear picture of the data flow.
+- The current playback engine does not provide a robust events API for monitoring and obtaining a clear data flow picture.
 - The current playback engine does not provide a robust Errors API, making diagnosing and narrowing issues difficult.
 - The current playback engine provides very limited interceptors API.
 - The current playback engine provides very limited configuration API.
@@ -136,18 +136,7 @@ This new engine will resolve the current deficiencies and provide a scalable fou
 
 # Monorepo Structure
 
-The `vhs-next` and future videojs `9` related repositories should live in one `@videojs` scoped monorepo.
-
-We already have `@videojs/*` scoped monorepo under the `web-media-box` repository:
-https://github.com/videojs/web-media-box
-
-> [!NOTE]
->
-> `web-media-box` or simply `WMB` is just a fancy name for the monorepo.
->
-> The actual packages are `@videojs/*` scoped.
->
-> We can rename it to any other name (eg: `videojs-monorepo`) or keep the existing name.
+The `vhs-next` and future `videojs-9` related repositories should live in one `@videojs` scoped [monorepo](https://github.com/videojs/monorepo).
 
 Here is monorepo structure example:
 
@@ -199,35 +188,35 @@ The following existing public packages should be deprecated and archived after `
 | HLS Live Type                                               | ✅             | MUST     | N/A                                                                                                                                                                                                                              | N/A                                                                         |
 | HLS Event Type                                              | ✅             | MUST     | N/A                                                                                                                                                                                                                              | N/A                                                                         |
 | HLS Live DVR                                                | ✅             | MUST     | Must support proper `seekable` API.                                                                                                                                                                                              | N/A                                                                         |
-| HLS Discontinuities                                         | ✅             | MUST     | We can use discontinuities to reset in-memory parsers (eg: cea-608/cea-708).                                                                                                                                                     | N/A                                                                         |
+| HLS Discontinuities                                         | ✅             | MUST     | We can use discontinuities to reset in-memory parsers (eg: transmuxers, cea-608/cea-708, etc...).                                                                                                                                | N/A                                                                         |
 | HLS Alternative Audio (when main is muxed)                  | ❌             | MUST     | If alternative audio is enabled, in-segment audio should be ignored.                                                                                                                                                             | N/A                                                                         |
 | HLS Standalone Media Playlist Loading                       | ✅             | MUST     | Player should support standalone media playlist load (outside of the multivariant playlist).                                                                                                                                     | N/A                                                                         |
-| HLS Key Rotation                                            | ✅             | MUST     | Player should be able to rotate ext-x-keys if multiple keys are presented in the playlist.                                                                                                                                       | [hls-key-rotation](#hls-key-rotation)                                       |
+| HLS Key Rotation                                            | ✅             | MUST     | Player should be able to rotate ext-x-keys (if multiple keys are presented in the playlist).                                                                                                                                     | [hls-key-rotation](#hls-key-rotation)                                       |
 | HLS Server Control                                          | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-server-control](#hls-server-control)                                   |
 | HLS Live Low Latency                                        | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-live-low-latency](#hls-live-low-latency)                               |
 | HLS Byte Range                                              | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-byte-range](#hls-byte-range)                                           |
-| HLS In-Manifest Timed Metadata                              | ✅             | MUST     | Both in-segment (id3 or emsg) and in-manifest (ext-x-DateRange) metadata will be processed. We should log warning.                                                                                                               | [hls-in-manifest-timed-metadata](#hls-in-manifest-timed-metadata)           |
-| HLS MPEG-2 Transport Stream                                 | ✅             | MUST     | Widevine/Playready are not supported for mpeg-2 ts. Fairplay should be supported only by native apple's player.                                                                                                                  | [hls-mpeg-2-transport-stream](#hls-mpeg-2-transport-stream)                 |
+| HLS In-Manifest Timed Metadata                              | ✅             | MUST     | Both in-segment (id3 or emsg) and in-manifest (ext-x-DateRange) metadata will be processed.                                                                                                                                      | [hls-in-manifest-timed-metadata](#hls-in-manifest-timed-metadata)           |
+| HLS MPEG-2 Transport Stream                                 | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-mpeg-2-transport-stream](#hls-mpeg-2-transport-stream)                 |
 | HLS Common Media Application Format (CMAF)                  | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-common-media-application-format](#hls-common-media-application-format) |
-| HLS Raw AAC                                                 | ✅             | MUST     | Shaka and hls.js transmux to AAC in MP4.                                                                                                                                                                                         | [hls-raw-aac](#hls-raw-aac)                                                 |
-| HLS Raw MP3                                                 | ❌             | SHOULD   | Shaka and hls.js transmux to MP3 in MP4.                                                                                                                                                                                         | [hls-raw-mp3](#hls-raw-mp3)                                                 |
-| HLS Raw AC3/EC3                                             | ❌             | SHOULD   | Shaka and hls.js transmux to AC3/EC3 in MP4.                                                                                                                                                                                     | [hls-raw-ac3/ec3](#hls-raw-ac3ec3)                                          |
-| HLS WebVTT                                                  | ✅             | MUST     | HLS WebVTT is not encapsulated in mp4 and timestamp sync is implemented via X-TIMESTAMP-MAP.                                                                                                                                     | [hls-webVTT](#hls-webvtt)                                                   |
-| HLS IMSC                                                    | ❌             | MUST     | HLS IMSC is encapsulated in m4.                                                                                                                                                                                                  | [hls-imsc](#hls-imsc)                                                       |
-| HLS AES-128                                                 | ✅             | MUST     | VHS implementation covers only AES-128 and creates additional WebWorker per each player instance. Shaka uses native Web Crypto API. hls.js uses combination of native web crypto and fallbacks to the software aes decrypt impl. | [hls-aes-128](#hls-aes-128)                                                 |
+| HLS Raw AAC                                                 | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [hls-raw-aac](#hls-raw-aac)                                                 |
+| HLS Raw MP3                                                 | ❌             | SHOULD   | N/A                                                                                                                                                                                                                              | [hls-raw-mp3](#hls-raw-mp3)                                                 |
+| HLS Raw AC3/EC3                                             | ❌             | SHOULD   | N/A                                                                                                                                                                                                                              | [hls-raw-ac3/ec3](#hls-raw-ac3ec3)                                          |
+| HLS WebVTT                                                  | ✅             | MUST     | timestamp sync is implemented via X-TIMESTAMP-MAP for raw or on a container level                                                                                                                                                | [hls-webVTT](#hls-webvtt)                                                   |
+| HLS TTML                                                    | ❌             | MUST     | N/A                                                                                                                                                                                                                              | [hls-imsc](#hls-imsc)                                                       |
+| HLS AES-128                                                 | ✅             | MUST     | The VHS implementation covers only AES-128 and creates an additional WebWorker per player instance. Shaka uses a native Web Crypto API. hls.js uses a combination of native Web Crypto and fallbacks to the software as decrypt. | [hls-aes-128](#hls-aes-128)                                                 |
 | HLS SAMPLE-AES and SAMPLE-AES-CTR with KEYFORMAT="identity" | ❌             | COULD    | Key format "identity" is `ClearKey`. It is nice for testing EME flow, but does not provide an actual security.                                                                                                                   | [hls-clearKey](#hls-clearkey)                                               |
 | HLS Variable Substitution                                   | ❌             | MUST     | N/A                                                                                                                                                                                                                              | [hls-variable-substitution](#hls-variable-substitution)                     |
 | HLS Interstitial                                            | ❌             | COULD    | Content producers can insert separate interstitial content into their primary presentations in order to display advertising, branding, or other information to viewers. It is implemented via EXT-X-DATERANGE.                   | [hls-interstitial](#hls-interstitial)                                       |
 | HLS Trick Play                                              | ❌             | SHOULD   | Trick play can be implemented via Ext-x-iframes-only playlists.                                                                                                                                                                  | [hls-trick-play](#hls-trick-play)                                           |
 | HLS In-manifest thumbnails (ext-x-iframes-only)             | ❌             | SHOULD   | In-manifest support via Ext-x-iframes-only playlists with mjpg codec.                                                                                                                                                            | [hls-in-manifest-thumbnails-i-frames](#hls-in-manifest-thumbnails-i-frames) |
-| HLS In-manifest thumbnails (roku)                           | ❌             | COULD    | It is unofficial spec, but nice to have.                                                                                                                                                                                         | [hls-in-manifest-thumbnails-roku](#hls-in-manifest-thumbnails-roku)         |
+| HLS In-manifest thumbnails (roku)                           | ❌             | COULD    | N/A                                                                                                                                                                                                                              | [hls-in-manifest-thumbnails-roku](#hls-in-manifest-thumbnails-roku)         |
 | HLS Session Data                                            | ❌             | SHOULD   | N/A                                                                                                                                                                                                                              | [hls-session-data](#hls-session-data)                                       |
 | **DASH**                                                    |               |          |                                                                                                                                                                                                                                  |                                                                             |
 | DASH VOD                                                    | ✅             | MUST     | N/A                                                                                                                                                                                                                              | N/A                                                                         |
 | DASH Live                                                   | ✅             | MUST     | N/A                                                                                                                                                                                                                              | N/A                                                                         |
 | DASH In-Progress Recording                                  | ✅             | MUST     | N/A                                                                                                                                                                                                                              | N/A                                                                         |
 | DASH Live DVR (timeShiftBufferDepth)                        | ❌             | MUST     | Must support proper `seekable` API                                                                                                                                                                                               | N/A                                                                         |
-| DASH Multi-Period                                           | ✅             | MUST     | We can use Period boundaries to reset in-memory parsers (eg: cea-608/cea-708).                                                                                                                                                   | N/A                                                                         |
+| DASH Multi-Period                                           | ✅             | MUST     | We can use discontinuities to reset in-memory parsers (eg: transmuxers, cea-608/cea-708, etc...).                                                                                                                                | N/A                                                                         |
 | DASH Xlink (onLoad)                                         | ❌             | SHOULD   | `onLoad`: an application should dereference the remote element entity immediately on loading the MPD.                                                                                                                            | [dash-xlink](#dash-xlink)                                                   |
 | DASH Xlink (onRequest)                                      | ❌             | COULD    | `onRequest` (default): according to W3C Xlink, an application should dereference the remote element entity only on a post-loading event triggered for the purpose of dereferencing.                                              | [dash-xlink](#dash-xlink)                                                   |
 | DASH Segment Index Addressing                               | ✅             | MUST     | SegmentBase                                                                                                                                                                                                                      | [dash-indexed-addressing](#dash-indexed-addressing)                         |
@@ -242,8 +231,7 @@ The following existing public packages should be deprecated and archived after `
 | **DRM**                                                     |               |          |                                                                                                                                                                                                                                  |                                                                             |
 | Widevine                                                    | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [drm](#drm)                                                                 |
 | PlayReady                                                   | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [drm](#drm)                                                                 |
-| Fairplay                                                    | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [drm](#drm)                                                                 |
-| Fairplay Legacy                                             | ✅             | MUST     | Legacy Fairplay is not aligned with the current version of the EME spec. we should use polyfill-based approach, check shaka's impl in the references.                                                                            | [drm-fairplay-legacy](#drm-fairplay-legacy)                                 |
+| Fairplay                                                    | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [drm](#drm) <br/> [drm-fairplay-legacy](#drm-fairplay-legacy)               |
 | ClearKey                                                    | ❌             | COULD    | See HLS and DASH sections about ClearKey.                                                                                                                                                                                        | [drm](#drm)                                                                 |
 | **Containers**                                              |               |          |                                                                                                                                                                                                                                  |                                                                             |
 | MPEG-2 TS AAC (Audio Codec)                                 | ✅             | MUST     | Transmux to AAC in MP4                                                                                                                                                                                                           | [mpeg-2-ts-aac](#mpeg-2-ts-aac)                                             |
@@ -252,46 +240,46 @@ The following existing public packages should be deprecated and archived after `
 | MPEG-2 TS Opus (Audio Codec)                                | ❌             | SHOULD   | Transmux to Opus in MP4                                                                                                                                                                                                          | [mpeg-2-ts-opus](#mpeg-2-ts-opus)                                           |
 | MPEG-2 TS H264 (Video Codec)                                | ✅             | MUST     | Transmux to H264 in MP4                                                                                                                                                                                                          | [mpeg-2-ts-h264](#mpeg-2-ts-h264)                                           |
 | MPEG-2 TS H265 (Video Codec)                                | ❌             | MUST     | Transmux to H265 in MP4                                                                                                                                                                                                          | [mpeg-2-ts-h265](#mpeg-2-ts-h265)                                           |
-| MPEG-2 TS ID3 (timed metadata)                              | ✅             | MUST     | Should be emitted alongside with in-manifest timed metadata (if any)                                                                                                                                                             | [mpeg-2-ts-id3](#mpeg-2-ts-id3)                                             |
+| MPEG-2 TS ID3 (timed metadata)                              | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [mpeg-2-ts-id3](#mpeg-2-ts-id3)                                             |
 | MPEG-2 TS CEA-608/CEA-708 (text tracks)                     | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [mpeg-2-ts-cea-608/cea-708](#mpeg-2-ts-cea-608cea-708)                      |
 | MP4 CEA-608/CEA-708 (text tracks)                           | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [mp4-cea-608/cea-708](#mp4-cea-608cea-708)                                  |
 | MP4 IMSC (text-tracks)                                      | ❌             | MUST     | N/A                                                                                                                                                                                                                              | [mp4-imsc](#mp4-imsc)                                                       |
 | MP4 VTT (text-tracks)                                       | ❌             | MUST     | N/A                                                                                                                                                                                                                              | [mp4-vtt](#mp4-vtt)                                                         |
-| MP4 EMSG (timed-metadata)                                   | ✅             | MUST     | Should be emitted alongside with in-manifest timed-metadata (if any)                                                                                                                                                             | [mp4-emsg](#mp4-emsg)                                                       |
+| MP4 EMSG (timed-metadata)                                   | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [mp4-emsg](#mp4-emsg)                                                       |
 | **Server-Client Signaling**                                 |               |          |                                                                                                                                                                                                                                  |                                                                             |
 | Content Steering                                            | ✅             | MUST     | N/A                                                                                                                                                                                                                              | [content-steering](#content-steering)                                       |
 | Common-Media-Client-Data (CMCD)                             | ❌             | SHOULD   | We may consider re-using `@svta/common-media-library/cmcd/*` utils                                                                                                                                                               | [common-media-client-data](#common-media-client-data)                       |
-| Common-Media-Server-Data (CMSD)                             | ❌             | SHOULD   | Limited support in shaka and dash.js. Mainly for ABR. We may consider re-using `@svta/common-media-library/cmsd/*` utils                                                                                                         | [common-media-server-data](#common-media-server-data)                       |
+| Common-Media-Server-Data (CMSD)                             | ❌             | SHOULD   | Mainly for ABR. We may consider re-using `@svta/common-media-library/cmsd/*` utils                                                                                                                                               | [common-media-server-data](#common-media-server-data)                       |
 | **Offline**                                                 |               |          |                                                                                                                                                                                                                                  |                                                                             |
 | IndexDB VOD persistence                                     | ❌             | SHOULD   | N/A                                                                                                                                                                                                                              | [offline](#offline)                                                         |
-| Offline DRM                                                 | ❌             | SHOULD   | support persisentState="required", sessionType="persistent-license" and mediaKeySession.load(sessionId)                                                                                                                          | [offline](#offline)                                                         |
+| Offline DRM                                                 | ❌             | SHOULD   | N/A                                                                                                                                                                                                                              | [offline](#offline)                                                         |
 
 # Non-Functional Requirements and DX
 
 | Name                                        | VHS (current) | Priority | Notes                                                                                                                                                                                                                                                                                                                                                |
 |---------------------------------------------|---------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Events API                                  | ✅             | MUST     | Current VHS implementation provides very limited Events System. Player must provide predictable and robust set of events with extensive event data.                                                                                                                                                                                                  |
-| Errors API                                  | ✅             | MUST     | Current VHS implementation provides very limited Errors System. Player must provide predictable and robust set of errors with extensive error data. Each error must have category, code and severity info, alongside with error data (if any).                                                                                                       |
-| Configurations API                          | ✅             | MUST     | Current VHS implementation provides very limited Configurations API. Users should be able to configure different aspects of player's workflow during runtime (where possible).                                                                                                                                                                       |
-| Env Capabilities API                        | ❌             | MUST     | Player must provide probe env capabilities API                                                                                                                                                                                                                                                                                                       |
-| Debug API                                   | ✅             | MUST     | Player must provide debug related APIs (eg: logger levels)                                                                                                                                                                                                                                                                                           |
-| ABR Strategies API                          | ❌             | MUST     | Current VHS implementation provides very limited ABR System. dash.js has an excellent example of ABR Strategies API.                                                                                                                                                                                                                                 |
-| Stream API                                  | ❌             | MUST     | Player should be able to utilize browser's fetch Readable/Writable Streams API and continuously process chunks of data instead of waiting while a whole resource is loaded.                                                                                                                                                                          |
-| Managed Media Source API                    | ❌             | MUST     | https://www.w3.org/TR/media-source-2/#managedmediasource-interface currently supported only on Safari (mac, ios, ipados) 17+                                                                                                                                                                                                                         |
+| Events API                                  | ✅             | MUST     | The current VHS implementation provides a very limited Events System. The player must provide a predictable and robust set of events with extensive event data.                                                                                                                                                                                      |
+| Errors API                                  | ✅             | MUST     | The current VHS implementation provides a very limited Error System. The player must provide a predictable and robust set of errors with extensive error data. Each error must have category, code, and severity information alongside error data (if any).                                                                                          |
+| Configurations API                          | ✅             | MUST     | The current VHS implementation provides a very limited Configuration API. Users should be able to configure different aspects of the player's workflow during runtime (where possible).                                                                                                                                                              |
+| Env Capabilities API                        | ❌             | MUST     | The player must provide probe env capabilities API                                                                                                                                                                                                                                                                                                   |
+| Debug API                                   | ✅             | MUST     | The player must provide debug-related APIs (eg: logger levels)                                                                                                                                                                                                                                                                                       |
+| ABR Strategies API                          | ❌             | MUST     | The current VHS implementation provides a very limited ABR System. dash.js has an excellent example of ABR Strategies API.                                                                                                                                                                                                                           |
+| Stream API                                  | ❌             | MUST     | The player should be able to utilize browser's fetch Readable/Writable Streams API and continuously process chunks of data instead of waiting while a whole resource is loaded.                                                                                                                                                                      |
+| Managed Media Source API                    | ❌             | MUST     | https://www.w3.org/TR/media-source-2/#managedmediasource-interface currently available only in Safari (mac, ios, ipados) 17+                                                                                                                                                                                                                         |
 | MSE in workers                              | ❌             | COULD    | https://wolenetz.github.io/mse-in-workers-demo/mse-in-workers-demo.html https://webkit.org/blog/15260/release-notes-for-safari-technology-preview-192 both chrome and safari already have support                                                                                                                                                    |
-| Interceptors API                            | ❌             | MUST     | In contrast to Events API where player notifies clients, Interceptors API allows users to intercept and modify data during important processing steps (including network requests).                                                                                                                                                                  |
+| Interceptors API                            | ❌             | MUST     | In contrast to Events API, where the player notifies clients, Interceptors API allows users to intercept and modify data during important processing steps (including network requests).                                                                                                                                                             |
 | Networking API                              | ❌             | MUST     | Users should be able to configure player networking behavior for **specific request type**: `maxAttempts`, `initialDelay`, `delayFactor`, `fuzzFactor` and `timeout`                                                                                                                                                                                 |
-| Service Locator API                         | ❌             | MUST     | Users should be able to replace ANY service managed by ServiceLocator based on their needs (including "during player runtime"). Users must implement interfaces for the services they want to replace or use service implementations provided from us. This API offers "build your own player" feature and allows extremely flexible customizations. |
-| Size: Opt-in features as separate bundles   | ❌             | MUST     | Most of the features should be provided via separate bundles and not included into main player bundle by default.                                                                                                                                                                                                                                    |
+| Service Locator API                         | ❌             | MUST     | Users should be able to replace ANY service managed by ServiceLocator based on their needs (including "during player runtime"). Users must implement interfaces for the services they want to replace or use service implementations provided by us. This API offers a "build your own player" feature and allows extremely flexible customizations. |
+| Size: Opt-in features as separate bundles   | ❌             | MUST     | Most features should be provided via separate bundles and not included in the main player bundle by default.                                                                                                                                                                                                                                         |
 | Size: Popular bundle presets                | ❌             | MUST     | While users can create their own player using Service Locator API, we should provide popular features bundle presets. eg: (player + hls pipeline) or (player + dash pipeline) or (player + hls and dash pipelines), etc..                                                                                                                            |
-| CLI prompt player builder                   | ❌             | SHOULD   | In case users wants to build a player with a very custom set of features or don't know exactly what features should be included they can use CLI prompt-based tool.                                                                                                                                                                                  |
-| Demo page with timeline visualization       | ❌             | COULD    | hls.js has an excellent example of timeline visualisation on their demo page.                                                                                                                                                                                                                                                                        |
-| Live Range Recorder with Server Replay Tool | ❌             | COULD    | Tool to record a problematic part from a live stream and replay (vod or live mode)                                                                                                                                                                                                                                                                   |
+| CLI prompt player builder                   | ❌             | SHOULD   | If users want to build a player with a very custom set of features or don't know exactly what features should be included, they can use the CLI prompt-based tool.                                                                                                                                                                                   |
+| Demo page with timeline visualization       | ❌             | COULD    | hls.js has an excellent example of timeline visualization on its demo page.                                                                                                                                                                                                                                                                          |
+| Live Range Recorder with Server Replay Tool | ❌             | COULD    | Tool to record a problematic part from a live stream and replay it (in VOD or LIVE modes)                                                                                                                                                                                                                                                            |
 | Generated API reference                     | ❌             | MUST     | N/A                                                                                                                                                                                                                                                                                                                                                  |
 | Tutorials Documentation                     | ✅             | MUST     | N/A                                                                                                                                                                                                                                                                                                                                                  |
 | Contributors Guides                         | ✅             | MUST     | N/A                                                                                                                                                                                                                                                                                                                                                  |
 | Generate Changelog                          | ✅             | MUST     | N/A                                                                                                                                                                                                                                                                                                                                                  |
-| Public Roadmap                              | ❌             | SHOULD   | We may maintain a public roadmap with expected features.                                                                                                                                                                                                                                                                                             |
+| Public Roadmap                              | ❌             | SHOULD   | N/A                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Browsers Matrix Support
 
@@ -306,13 +294,13 @@ The following existing public packages should be deprecated and archived after `
 
 > [!IMPORTANT]
 >
-> iOS < 17.1 does not support MSE so only native playback is supported. iOS >= 17.1 supports MMSE (managed MSE)
+> iOS < 17.1 does not support MSE, so only native playback is supported. iOS >= 17.1 supports MMSE (managed MSE)
 >
 > IPadOS < 17.0 does not support MSE, so only native playback is supported. IPadOS >= 17.0 supports MMSE (managed MSE)
 
 # Entities
 
-This section describes entities, their relationship and boundaries with possible API examples.
+This section describes entities, their relationship, and boundaries with possible API examples.
 
 > [!WARNING]
 >
@@ -330,7 +318,7 @@ This section describes entities, their relationship and boundaries with possible
 
 ## Player (Facade)
 
-The player facade is the main API gateway for almost all features provided by our playback engine. Its main purpose is to simplify client usage and hide complexity.
+The player facade is the main API gateway for almost all features our playback engine provides. Its primary purpose is to simplify client usage and hide complexity.
 
 ```ts
 type EventHandler<T> = (event: T) => void;
@@ -538,12 +526,13 @@ interface Player {
 
 ServiceLocator is the main entity that locates and updates services.
 
-By default, player should have very limited functionality and support only native playback. ServiceLocator is initialized with fallback services.
+By default, the player should have limited functionality and support only native playback. ServiceLocator is initialized with fallback services.
 
-ServiceLocator provides 3 main features:
-- Build your own player. (Replace default fallbacks with implementations provided by us)
-- Customize ANY service. (Replace default fallback or implementation provided by us with your own implementations)
-- Access to ANY service. (ServiceLocator allows access to any available service)
+ServiceLocator provides three main features:
+
+Build "your own player". (Replace default fallbacks with implementations provided by us)
+Customize ANY service. (Replace default fallbacks or implementations provided by us with your own implementations)
+Access to ANY service. (ServiceLocator allows access to any available service)
 
 
 ### Usage Example 1 (Access Service and use it)
@@ -558,7 +547,7 @@ const hlsParser = serviceLocator.getHlsParser();
 hlsParser.parse(playlist);
 ```
 
-### Usage Example 2 (Build your own player)
+### Usage Example 2 (Build "your own player")
 
 ```ts
 import { HlsParser } from '@videojs/hls-parser';
@@ -671,7 +660,7 @@ interface ServiceLocator {
 
 ## PipelineProvider
 
-Pipeline provider allows registering custom pipelines for specific mimeTypes. The player will use it during load.
+The pipeline provider allows custom pipelines to be registered for specific mimeTypes. The player will use it during load.
 
 ```ts
 interface PipelineProvider {
@@ -687,7 +676,8 @@ interface PipelineProvider {
 ## AbrManager
 
 AbrManager should control adaptation sets switching based on the registered ABR rules.
-we should provide the default EWMA rule.
+
+We should provide the default EWMA rule.
 
 ```ts
 interface AbrManager {
@@ -702,7 +692,7 @@ interface AbrManager {
 
 ## NetworkingManager
 
-NetworkingManager is a high level abstraction over browser's fetch or XHR API.
+NetworkingManager is a high-level abstraction over the browser's fetch or XHR API.
 - Should support Streams API to stream chunks of data from the network. (where possible)
 - Should execute interceptors for `InterceptorType.NetworkRequestStart` to modify request payload, `InterceptorType.NetworkRequestComplete` to modify response payload, `InterceptorType.NetworkRequestFailed` to modify failed response payload.
 - Should trigger `Event.NetworkRequestStart`, `Event.NetworkRequestComplete`, `Event.NetworkRequestFailed` events with corresponding event payloads.
@@ -719,6 +709,8 @@ enum NetworkRequestType {
   InitSegment,
   MediaSegment
 }
+
+// Example of the networking configuration per network request type
 
 interface NetworkingConfiguration {
   /**
