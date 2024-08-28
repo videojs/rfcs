@@ -26,28 +26,16 @@
   * [NetworkingManager](#networkingmanager)
   * [Events API](#events-api)
   * [Errors API](#errors-api)
-* [Scenarios](#scenarios)
-  * [Applicable for each scenario](#applicable-for-each-scenario)
-  * [HLS VOD (load)](#hls-vod-load)
-  * [HLS VOD (Continuous loading within one rendition group)](#hls-vod-continuous-loading-within-one-rendition-group)
-  * [HLS VOD (Manual Quality Switching)](#hls-vod-manual-quality-switching)
-  * [HLS VOD (ABR Quality Switching)](#hls-vod-abr-quality-switching)
-  * [HLS VOD (Seek out of buffer)](#hls-vod-seek-out-of-buffer)
-  * [HLS Live (load)](#hls-live-load)
-  * [HLS Live (Continuous loading within one rendition group)](#hls-live-continuous-loading-within-one-rendition-group)
-  * [HLS Live (Manual Quality Switching)](#hls-live-manual-quality-switching)
-  * [HLS Live (ABR Quality Switching)](#hls-live-abr-quality-switching)
-  * [HLS Live (Seek out of buffer)](#hls-live-seek-out-of-buffer)
-  * [DASH VOD (load)](#dash-vod-load)
-  * [DASH VOD (Continuous loading within one rendition group)](#dash-vod-continuous-loading-within-one-rendition-group)
-  * [DASH VOD (Manual Quality Switching)](#dash-vod-manual-quality-switching)
-  * [DASH VOD (ABR Quality Switching)](#dash-vod-abr-quality-switching)
-  * [DASH VOD (Seek out of buffer)](#dash-vod-seek-out-of-buffer)
-  * [DASH Live (load)](#dash-live-load)
-  * [DASH Live (Continuous loading within one rendition group)](#dash-live-continuous-loading-within-one-rendition-group)
-  * [DASH Live (Manual Quality Switching)](#dash-live-manual-quality-switching)
-  * [DASH Live (ABR Quality Switching)](#dash-live-abr-quality-switching)
-  * [DASH Live (Seek out of buffer)](#dash-live-seek-out-of-buffer)
+* [Timing Models](#timing-models)
+  * [HLS Timing model](#hls-timing-model)
+    * [Applicable for each scenario](#applicable-for-each-scenario)
+    * [Track alignments variations](#track-alignments-variations)
+    * [Offset](#offset)
+    * [Load](#load)
+    * [Continuous loading within one rendition group](#continuous-loading-within-one-rendition-group)
+    * [Manual Quality Switching](#manual-quality-switching)
+    * [ABR Quality Switching](#abr-quality-switching)
+  * [Dash Timing Model](#dash-timing-model)
 * [References](#references)
     * [HLS Key Rotation](#hls-key-rotation)
     * [HLS Server Control](#hls-server-control)
@@ -496,11 +484,11 @@ interface Player {
   // Interceptors API
 
   // register interceptor for a specific player's processing step. (sync)
-  addInterceptor<K extends InterpceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
+  addInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
   // register interceptor for a specific player's processing step. (async, some steps can be processed as async, so we should have a separate api)
   addAsyncInterceptor<K extends AsyncInterceptorType>(interceptorType: K, interceptor: AsyncInterceptor<AsyncInterceptorTypeToPayloadMap[K]>): void;
   // remove specific interceptor for specific step (sync)
-  removeInterceptor<K extends InterpceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
+  removeInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
   // remove specific interceptor for specific step (async)
   removeAsyncInterceptor<K extends AsyncInterceptorType>(interceptorType: K, interceptor: AsyncInterceptor<AsyncInterceptorTypeToPayloadMap[K]>): void;
   // remove all interceptors
@@ -838,23 +826,60 @@ interface AsyncInterceptorTypeToPayloadMap {
 }
 ```
 
-# Scenarios
+# Timing Models
 
-## Applicable for each scenario
+## HLS Timing model
+
+### Applicable for each scenario
 
 - We should always demux the main with audio and video. This will help us switch alternative audio without reloading the whole video part.
-- We should always override original timestamps according to the player's timeline. This should significantly simplify time calculations and reduce sync issues between rendition switches with rollovers and discontinuities.
-- We should always use an index-based approach when continuously loading segments within one rendition group. We should use buffered.end as a start pts/dts for the next segment to load.
+- We should always override original timestamps according to the player's timeline. This should significantly simplify time calculations and reduce sync issues and gaps jumping.
+- We should always use an index-based approach when continuously loading segments within one rendition group. We should align timestamps based on sourceBuffer.buffered time ranges to avoid gaps.
 
-## HLS VOD (load)
 
-Let's assume we have a VOD stream with the main (as video), alternative audio, subtitles, and images (thumbnails or trick-play).
+### Track alignments variations
 
-I added discontinuities and rollovers to cover complex examples:
+It may be that for various content processing workflow reasons, some tracks have a different duration from others. For example, the audio track might start a fraction of a second before the video track and end some time before the video track end and so on, here are several example:
 
-The `Player Timeline` is built based on the first `main` occurrence. This timeline should reflect what users see on the UI.
+![track-alignment-examples](./resources/track-alignment-examples.svg)
 
-`Start Time` is the value provided by the client during load (default value is `0`).
+> [!NOTE]
+> 
+> Content may be padded (optionally) to equalize track lengths.
+> 
+> If you wish to preserve track contents in their entirety, the most interoperable option is to add padding samples (e.g. silence or black frames)
+> 
+> but since the padding must match the codec configuration of the real content, it can be hard to implement on player's side.
+> 
+> However, users might know better about their content, so we can provide API to provide us with required paddings (if necessary), eg:
+> 
+> player.addInterceptor(InterceptorType.ContentPrePadding, ({ codec, prePaddingData }) => { ...return prePaddingData })
+> player.addInterceptor(InterceptorType.ContentPostPadding, ({ codec, postPaddingData }) => { ...return postPaddingData })
+
+### Offset
+
+```js
+// get initial offset:
+offset = min(audioTrack.startPts, videoTrack.startPts) / timescale
+
+// aligne timestamps with zero-point:
+
+audioTrack.samples.forEach((sample) => {
+  sample.pts -= offset;
+});
+
+videoTrak.samples.forEach((sample) => {
+  sample.pts -= offset;
+});
+```
+
+### Load
+
+The `Player Timeline` is built based on the first `main` occurrence. This timeline should reflect what users see on the player's UI.
+
+`Start Time`:
+- VOD: is the value provided by the client during load (default value is `0` for VOD)
+- LIVE: hold-back value from the server control or 3 * target duration
 
 The `Main Timeline` reflects the `main` playlist (ext-x-stream-inf, which could be `video+audio`, `video-only`, or `audio-only`).
 
@@ -868,7 +893,7 @@ Once a user loads a source, we group renditions into Rendition Groups and select
 
 ![hls-vod-load-timelines](./resources/hls-vod-load-timelines.svg)
 
-## HLS VOD (Continuous loading within one rendition group)
+### Continuous loading within one rendition group
 
 `BufferBehind` is a configurable value in seconds to keep in the buffer behind the playhead. Everything else will be removed from the buffer.
 
@@ -876,8 +901,7 @@ Once a user loads a source, we group renditions into Rendition Groups and select
 
 In the following example, we continuously load segments within one rendition group.
 - We select the next segment using the `++index` approach.
-- We should use `buffered.end` as a start pts/dts for the next segment.
-- We don't care about discontinuities or rollover since we override original timestamps. However, we still have to reset parsers that may have in-memory data and can parse through multiple segments (such as cea-608/708).
+- We should align timestamps based on sourceBuffer.buffered time ranges to avoid gaps.
 
 So, In this particular example:
 
@@ -893,7 +917,7 @@ If a user pauses the player, it should not pause segment loading (till the buffe
 
 ![hls-vod-continuous-loading-within-one-rendition-group](./resources/hls-vod-continuous-loading-within-one-rendition-group.svg)
 
-## HLS VOD (Manual Quality Switching)
+### Manual Quality Switching
 
 Each `RenditionGroup` implements a `transition` method, which expects a destination rendition group and transition reason.
 
@@ -905,9 +929,11 @@ Once we loaded the main and alternative audio playlists, we should select the se
 - `PlayerTimeline.getSegment(mainTimeline, currentTime)`: in the current example this should resolve to segment `3`, so we reset `index` to `3`
 - `PlayerTimeline.getSegment(audioTimeline, currentTime)`: in the current example this should resolve to segment `6`, so we reset `index` to `6`
 
+note: additional in-memory sync should be implemented for live playlist refreshes, so player timeline can properly locate segments based on the provided target time.
+
 ![hls-vod-manual-quality-switching](./resources/hls-vod-manual-quality-switching.svg)
 
-## HLS VOD (ABR Quality Switching)
+### ABR Quality Switching
 
 When ABR switches quality, we don't have to replace the buffer at the current time. Users should continue watching the existing quality without interruptions, and we should seamlessly update the quality around the buffered end.
 
@@ -915,71 +941,16 @@ In the following example, the destination rendition group has different audio (d
 
 Once we load the main and alternative audio playlists, we should select a segment to load. We should not reset the `index` and just transfer it as is to the destination rendition group timelines.
 
+note: additional in-memory sync should be implemented for live playlist refreshes, so player timeline can properly locate segments based on the provided target time.
+
 ![hls-vod-abr-quality-switching](./resources/hls-vod-abr-quality-switching.svg)
 
-## HLS VOD (Seek out of buffer)
 
-TBD
+## Dash Timing Model
 
-## HLS Live (load)
+Dash timing model must be implemented according to the following DASH-IF Guideline:
 
-TBD
-
-## HLS Live (Continuous loading within one rendition group)
-
-TBD
-
-## HLS Live (Manual Quality Switching)
-
-TBD
-
-## HLS Live (ABR Quality Switching)
-
-TBD
-
-## HLS Live (Seek out of buffer)
-
-TBD
-
-## DASH VOD (load)
-
-TBD
-
-## DASH VOD (Continuous loading within one rendition group)
-
-TBD
-
-## DASH VOD (Manual Quality Switching)
-
-TBD
-
-## DASH VOD (ABR Quality Switching)
-
-TBD
-
-## DASH VOD (Seek out of buffer)
-
-TBD
-
-## DASH Live (load)
-
-TBD
-
-## DASH Live (Continuous loading within one rendition group)
-
-TBD
-
-## DASH Live (Manual Quality Switching)
-
-TBD
-
-## DASH Live (ABR Quality Switching)
-
-TBD
-
-## DASH Live (Seek out of buffer)
-
-TBD
+https://github.com/Dash-Industry-Forum/Guidelines-TimingModel/blob/master/21-Timing.inc.md
 
 # References
 
