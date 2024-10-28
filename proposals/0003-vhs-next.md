@@ -149,8 +149,6 @@ As you can see from this structure, videojs scoped monorepo will have 2 main rep
 
 `@videojs/playback` is a standalone player that handles playback and does not support UI. (Similar to hls.js and dash.js).
 
-`@videojs/ui` is a standalone UI player that uses `@videojs/playback` under the hood and provides a lot of UI WebComponents to customize your player. (Something similar to https://www.vidstack.io/ or https://www.media-chrome.org/)
-
 This way we cover both groups of developers:
 - Developers who want to build their own player's UI on top of `@videojs/playback`
 - Developers who want embedded player experience
@@ -304,7 +302,7 @@ This section describes entities, their relationship, and boundaries with possibl
 
 ## Entities and their boundaries (high-level diagram)
 
-![entities-boundaries](./resources/entities-boundaries.svg)
+![entities-boundaries-with-workers](./resources/entities-boundaries-with-workers.svg)
 
 ## Player (Facade)
 
@@ -313,11 +311,9 @@ The player facade is the main API gateway for almost all features our playback e
 ```ts
 type EventHandler<T> = (event: T) => void;
 
-type Interceptor<T> = (payload: T) => T;
+type Interceptor<T> = (payload: T) => Promise<T>;
 
-type AsyncInterceptor<T> = (payload: T) => Promise<T>;
-
-interface KeySystemConfig {
+interface IKeySystemConfig {
   licenseServerUri: string;
   serverCertificateUri?: string;
   serverCertificate?: Uint8Array;
@@ -326,189 +322,142 @@ interface KeySystemConfig {
   videoRobustness?: string;
   audioRobustness?: string;
   sessionType?: MediaKeySessionType;
+  sessionId?: string;
   getContentId?: (contentId: string) => string;
 }
 
-type SourceKeySystems = Record<string, KeySystemConfig>;
-
-interface Source {
+interface ILoadSource {
   mimeType: string;
-  url: string;
-  keySystems?: SourceKeySystems;
+  loaderAlias?: string;
+  keySystems?: Record<string, IKeySystemConfig>;
+  /**
+   * You have to provide baseUrl for MPEG-DASH or HLS parsing
+   * If provided manifest/playlist has relative urls inside and provided as one of the following formats:
+   * - data: | blob: URL
+   * - string | ArrayBuffer | Blob | File asset
+   */
+  baseUrl?: URL;
 }
+
+interface ILoadRemoteSource extends ILoadSource {
+  /**
+   * Popular use-cases: (http:|https:|data:|blob:) all should work fine with fetch
+   * Potentially, could be any other protocols, so custom network manager should be provider by the client
+   */
+  readonly url: URL;
+}
+
+interface ILoadLocalSource extends ILoadSource {
+  /**
+   * Provided asset will be converted as follows:
+   * new URL(URL.createObjectURL(new Blob([source.asset])));
+   */
+  readonly asset: string | ArrayBuffer | Blob | File;
+}
+
+
 
 interface Player {
   // Version API
 
-  // get current player's version
   getVersion(): string;
-  // get current player's version hash
   getVersionHash(): string;
 
-  // Service Locator API
-  
-  getServiceLocator(): ServiceLocator;
+  // Debug API
+
+  getLoggerLevel(): LoggerLevel;
+  setLoggerLevel(loggerLevel: LoggerLevel): void;
 
   // Configuration API
 
-  // get deep copy of the current configuration
   getConfigurationSnapshot(): PlayerConfiguration;
-  // update current configuration
   updateConfiguration(configurationChunk: DeepPartial<PlayerConfiguration>): void;
-  // reset configuration to default
   resetConfiguration(): void;
   
-  // Debug API
-  
-  // get current logger level
-  getLoggerLevel(): LoggerLevel;
-  // set logger level
-  setLoggerLevel(loggerLevel: LoggerLevel): void;
+  // Events API
+
+  addEventListener<K extends PlayerEventType>(type: K, listener: EventListener<EventTypeToEventMap[K]>): void;
+  once<K extends PlayerEventType>(type: K, listener: EventListener<EventTypeToEventMap[K]>): void;
+  removeEventListener<K extends PlayerEventType>(type: K, listener: EventListener<EventTypeToEventMap[K]>): void;
+  removeAllEventListenersForType<K extends PlayerEventType>(type: K): void;
+  removeAllEventListeners(): void;
+
+  // Interceptors API
+
+  addInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: InterceptorTypeToInterceptorMap[K]): void;
+  removeInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: InterceptorTypeToInterceptorMap[K]): void;
+  removeAllInterceptorsForType<K extends InterceptorType>(interceptorType: K): void;
+  removeAllInterceptors(): void;
 
   // Life Cycle API
   
   // attach player to the video element that has already been defined in the DOM
   attach(videoElement: HTMLVideoElement): void;
-  // get current video element
-  getCurrentVideoElement(): HTMLVideoElement | null;
   // detach player from the current video element
   detach(): void;
-  // stop current playback and transition to idle state
-  stop(): void;
-  // cleanup all services and destroy player itself
-  destroy(): void;
+  // get current video element
+  getCurrentVideoElement(): HTMLVideoElement | null;
   // load provided source, create processing pipeline based on mime type and transition to loading state
   load(source: Source): void;
+  // stop current playback and transition to idle state
+  stop(): void;
   // get active source
   getCurrentSource(): Source | null;
+  // cleanup all services and destroy player itself
+  dispose(): void;
   
   // Playback API
-  
-  // initiate / continue playback --> forward call to pipeline
+
   play(): void;
-  // pause current playback --> forward call to pipeline
   pause(): void;
-  // seek to the seek target, should return false if seek target is out of any seekable ranges
   seek(seekTarget: number): boolean;
-  // get current time
   getCurrentTime(): number;
-  // get current playback rate
+
   getPlaybackRate(): number;
-  // set current playback rate
   setPlaybackRate(rate: number): void;
-  // mute current playback
+
   mute(): void;
-  // unmute current playback
   unmute(): void;
-  // get current volume level
-  getVolumeLevel(): number;
-  // set current volume level (clamp [0-1])
-  setVolumeLevel(level: number): void;
-  // get current playback duration (from the pipeline)
-  getDuration(): number;
-  // get current player state
-  getCurrentPlayerState(): PlayerState;
-  // get muted state
   getIsMuted(): boolean;
-  // get snapshot of the buffered ranges from the current pipeline
-  getBufferedRanges(): Array<PlayerTimeRange>;
-  // get active buffered range
-  getActiveBufferedRange(): PlayerTimeRange | null;
-  // get snapshot of the seekable ranges from the current pipeline
-  getSeekableRanges(): Array<SeekableRange>;
-  
-  // Playback API: Audio Tracks
-  
-  // get snapshot of the audio tracks from the current pipeline
-  getAudioTracks(): Array<AudioTrack>;
-  // get currently active audio track
-  getActiveAudioTrack(): AudioTrack | null;
-  // select audio track --> forward call to pipeline
-  selectAudioTrack(audioTrack: AudioTrack): void;
 
-  // Playback API: Text Tracks
+  getVolumeLevel(): number;
+  setVolumeLevel(volumeLevel: number): void;
 
-  // get text tracks from the current pipeline
-  getTextTracks(): Array<TextTrack>;
-  // get active text track
-  getActiveTextTrack(): TextTrack | null;
-  // select text track --> forward call to pipeline
-  selectTextTrack(track: TextTrack): void;
-  // add remote vtt text track (only VOD), should return false for live --> forward call to pipeline
+  getDuration(): number;
+
+  getPlaybackState(): PlaybackState;
+
+  getPlaybackStats(): IPlaybackStats;
+
+  getSeekableRanges(): Array<IPlayerTimeRange>;
+  getActiveSeekableRange(): IPlayerTimeRange | null;
+
+  getBufferedRanges(): Array<IPlayerTimeRange>;
+  getActiveBufferedRange(): IPlayerTimeRange | null;
+
+  getQualityLevels(): Array<IQualityLevel>;
+  getActiveQualityLevel(): IQualityLevel | null;
+  selectQualityLevel(id: string): boolean;
+  selectAutoQualityLevel(): boolean;
+
+  getAudioTracks(): Array<IPlayerAudioTrack>;
+  getActiveAudioTrack(): IPlayerAudioTrack | null;
+  selectAudioTrack(id: string): boolean;
+
+  getTextTracks(): Array<IPlayerTextTrack>;
+  getActiveTextTrack(): IPlayerTextTrack | null;
+  selectTextTrack(id: string): boolean;
   addRemoteTextTrack(remoteTextTrackOptions: RemoteTextTrackOptions): boolean;
-  // remove remote vtt text track (only VOD), should return false for live --> forward call to pipeline
-  removeRemoteTextTrack(textTrack: TextTrack): boolean;
+  removeRemoteTextTrack(id: string): boolean;
 
-  // Playback API: Thumbnails Tracks
+  getMetadataTracks(): Array<IPlayerMetadataTrack>;
 
-  // get thumbnails tracks from the current pipeline
-  getThumbnailTracks(): Array<ThumbnailTrack>;
-  // get active thumbnail track
-  getActiveThumbnailTrack(): ThumbnailTrack | null;
-  // select thumbnails track --> forward call to pipeline
-  selectThumbnailTrack(thumbnailTrack: ThumbnailTrack): void;
-  // add remote vtt thumbnail track (only VOD), should return false for live --> forward call to pipeline
-  addRemoteThumbnailTrack(remoteThumbnailTrackOptions: RemoteThumbnailTrackOptions): boolean;
-  // remove remote vtt thumbnail track (only VOD), should return false for live --> forward call to pipeline
-  removeRemoteThumbnailTrack(thumbnailTrack: ThumbnailTrack): boolean;
+  getThumbnailTracks(): Array<IPlayerThumbnailTrack>;
+  getActiveThumbnailTrack(): IPlayerThumbnailTrack | null;
+  selectThumbnailTrack(id: string): boolean;
+  addRemoteThumbnailTrack(options: IRemoteVttThumbnailTrackOptions): boolean;
+  removeRemoteThumbnailTrack(id: string): boolean;
 
-  // Playback API: Metadata Tracks
-  // get metadata tracks from the current pipeline (in-manifest timed-metadata, in-segment timed metadata)
-  getMetadataTrack(): MetadataTrack;
-
-  // Playback API: Quality Levels
-  
-  // get all quality levels available for main track (video+audio, video-only, audio-only)
-  getQualityLevels(): Array<QualityLevel>;
-  // get current active quality level
-  getActiveQualityLevel(): QualityLevel | null;
-  // select active quality level --> this will disable ABR
-  selectQualityLevel(level: QualityLevel): void;
-  // enable ABR
-  selectAutoQualityLevel(): void;
-
-  // Events API
-  // Errors API is available via PlayerErrorEvent
-
-  // register event handler for specific event
-  addEventListener<K extends PlayerEventType>(eventType: K, eventHandler: EventHandler<EventTypeToEventMap[K]>): void;
-  // register event handler for all events '*', mainly for debug purposes
-  addEventListenerForAllEvents(eventHandler: EventHandler<PlayerEvent>): void;
-  // register event handler for specific events once
-  once<K extends PlayerEventType>(eventType: K, eventHandler: EventHandler<EventTypeToEventMap[K]>): void;
-  // remove specific registered event handler for specific event
-  removeEventListener<K extends PlayerEventType>(eventType: K, eventHandler: EventHandler<EventTypeToEventMap[K]>): void;
-  // remove all registered event handlers for specific event
-  removeAllEventListenersForType<K extends PlayerEventType>(eventType: K): void;
-  // remove all registered event handlers for all events
-  removeAllEventListeners(): void;
-
-  // Interceptors API
-
-  // register interceptor for a specific player's processing step. (sync)
-  addInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
-  // register interceptor for a specific player's processing step. (async, some steps can be processed as async, so we should have a separate api)
-  addAsyncInterceptor<K extends AsyncInterceptorType>(interceptorType: K, interceptor: AsyncInterceptor<AsyncInterceptorTypeToPayloadMap[K]>): void;
-  // remove specific interceptor for specific step (sync)
-  removeInterceptor<K extends InterceptorType>(interceptorType: K, interceptor: Interceptor<InterceptorTypeToPayloadMap[K]>): void;
-  // remove specific interceptor for specific step (async)
-  removeAsyncInterceptor<K extends AsyncInterceptorType>(interceptorType: K, interceptor: AsyncInterceptor<AsyncInterceptorTypeToPayloadMap[K]>): void;
-  // remove all interceptors
-  removeAllInterceptors(): void;
-
-  // Networking API
-
-  // update networking configuration for specific request type
-  updateNetworkingConfiguration(requestType: NetworkRequestType, networkingConfiguration: NetworkingConfiguration): void;
-  // reset networking configuration to default values for specific request type
-  resetNetworkingConfiguration(requestType: NetworkRequestType): void;
-  // reset networking configurations for all reques types
-  resetAllNetworkingConfigurations(): void;
-  
-  // Env capabilities API
-  
-  // probe current env capabilities
-  probeEnvCapabilities(): Promise<CapabilitiesProbeResult>
 }
 ```
 
